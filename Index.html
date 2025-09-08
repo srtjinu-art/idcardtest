@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indian Railway ID Card Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #FFA500;
+      --secondary-color: #004d99;
+      --accent-color: #e67e22;
+      --light-bg: #f9f9f9;
+      --dark-text: #333;
+      --error-color: #dc3545;
+      --success-color: #28a745;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: "Times New Roman", Times, serif;
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #74ebd5, #9face6);
+      min-height: 100vh;
+      color: var(--dark-text);
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h2 { 
+      font-size: 28px; 
+      font-weight: bold; 
+      color: #fff; 
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.5); 
+      margin-bottom: 20px; 
+      padding: 10px;
+      background-color: var(--secondary-color);
+      border-radius: 8px;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    
+    .form-section { 
+      background: #ffe8a1; 
+      padding: 20px; 
+      border-radius: 12px; 
+      text-align: left; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+      border: 2px solid #f8c146;
+      flex: 1;
+      min-width: 300px;
+      max-width: 500px;
+    }
+    
+    .form-row {
+      margin-bottom: 12px;
+      position: relative;
+    }
+    
+    label { 
+      display: block; 
+      margin-bottom: 4px; 
+      font-weight: bold; 
+      color: #333;
+    }
+    
+    input, select { 
+      padding: 8px; 
+      width: 100%; 
+      border-radius: 6px; 
+      border: 1px solid #aaa; 
+      font-family: inherit;
+    }
+    
+    input.error, select.error {
+      border-color: var(--error-color);
+      box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+    }
+    
+    .error-message {
+      color: var(--error-color);
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+    
+    .required::after {
+      content: " *";
+      color: var(--error-color);
+    }
+    
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    button { 
+      padding: 10px 15px; 
+      border: none; 
+      border-radius: 6px; 
+      color: white; 
+      font-weight: bold; 
+      cursor: pointer; 
+      transition: 0.3s;
+      flex: 1;
+      min-width: 120px;
+    }
+    
+    button:hover { 
+      transform: scale(1.05); 
+      opacity: 0.9;
+    }
+    
+    .btn-add { 
+      background: var(--success-color); 
+    }
+    
+    .btn-export { 
+      background: #007bff; 
+    }
+    
+    .btn-import { 
+      background: #17a2b8; 
+    }
+    
+    .download-btn { 
+      background: var(--error-color); 
+      color: white; 
+      font-weight: bold; 
+      padding: 12px 20px; 
+      border-radius: 8px; 
+      margin: 20px auto;
+      cursor: pointer; 
+      transition: 0.3s; 
+      font-size: 16px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+      display: block;
+      max-width: 250px;
+    }
+    
+    .download-btn:hover { 
+      transform: scale(1.08); 
+      background: #b52a37; 
+    }
+    
+    #importFile { 
+      display: none; 
+    }
+    
+    .file-upload-label {
+      display: inline-block;
+      padding: 10px 15px;
+      background: #17a2b8;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.3s;
+    }
+    
+    .file-upload-label:hover {
+      background: #138496;
+    }
+    
+    .card-container { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 20px; 
+      justify-content: center; 
+      margin-top: 20px;
+      flex: 2;
+      min-width: 300px;
+    }
+    
+    .id-card { 
+      width: 5.4cm; 
+      height: 8.75cm; 
+      border: 1px solid #000; 
+      background: var(--primary-color); 
+      position: relative; 
+      padding: 0.2cm; 
+      box-sizing: border-box; 
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.4); 
+    }
+    
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+    
+    .header img { 
+      height: 18px; 
+    }
+    
+    .header span {
+      font-size: 14pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .id-number {
+      font-size: 9pt;
+      text-align: center;
+      margin-bottom: 0.2cm;
+    }
+
+    /* Photo + Signature alignment */
+    .photo {
+      width: 4.2cm;
+      height: 4.85cm;
+      border: 1px solid #000;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #fff;
+      border-radius: 6px;
+    }
+    
+    .photo img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: cover; 
+    }
+
+    .signature {
+      font-size: 6pt;
+      text-align: center;
+      width: 4.2cm;
+      margin: 0.1cm auto 0 auto;
+    }
+    
+    .signature-box {
+      width: 4.2cm;
+      height: 0.75cm;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #000;
+      border-radius: 0;
+    }
+
+    .emp-name { 
+      font-size: 16pt; 
+      font-weight: bold; 
+      margin-top: 0.1cm; 
+      text-align: center; 
+      text-transform: uppercase; 
+    }
+    
+    .footer { 
+      position: absolute; 
+      bottom: 5px; 
+      right: 5px; 
+      font-size: 8pt; 
+    }
+
+    /* Back page */
+    .back-top { 
+      display: flex; 
+      justify-content: space-between; 
+    }
+    
+    .qrcode, .blood, .dept, .mobile, .aadhaar { 
+      border-radius: 0; 
+    }
+    
+    .qrcode {
+      width: 2.5cm;
+      height: 2.5cm;
+      border: 1px solid #000;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 0;
+    }
+    
+    .qrcode canvas {
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      image-rendering: pixelated;
+    }
+    
+    .blood { 
+      width: 2.35cm; 
+      height: 2.5cm; 
+      border: 1px solid #000; 
+      font-size: 48pt; 
+      font-weight: bold; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      text-transform: uppercase; 
+      background: var(--primary-color); 
+      color: #000; 
+    }
+    
+    .dept { 
+      border: 1px solid #000; 
+      font-size: 18pt; 
+      font-weight: bold; 
+      margin-top: 0.2cm; 
+      text-align: center; 
+      height: 2cm; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      text-transform: uppercase; 
+      background: var(--primary-color); 
+    }
+    
+    .mobile { 
+      font-size: 24pt; 
+      margin-top: 0.2cm; 
+      text-align: center; 
+      background: var(--primary-color); 
+    }
+    
+    .aadhaar { 
+      font-size: 14pt; 
+      text-align: center; 
+      margin-top: 0.1cm; 
+      letter-spacing: 2px; 
+      border-bottom: 1px solid #000; 
+      padding-bottom: 0.1cm; 
+      background: var(--primary-color); 
+    }
+    
+    .instructions { 
+      font-size: 7pt; 
+      margin-top: 0.4cm; 
+      text-align: center; 
+    }
+    
+    .card-wrapper {
+      position: relative;
+      display: inline-block;
+      margin: 10px;
+    }
+    
+    .remove-btn { 
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: var(--error-color);
+      color: white;
+      border-radius: 50%;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      color: white;
+      background: var(--success-color);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .notification.show {
+      transform: translateX(0);
+    }
+    
+    .notification.error {
+      background: var(--error-color);
+    }
+    
+    .form-tabs {
+      display: flex;
+      margin-bottom: 15px;
+      border-bottom: 2px solid var(--secondary-color);
+    }
+    
+    .form-tab {
+      padding: 8px 15px;
+      cursor: pointer;
+      background: #f0f0f0;
+      border-radius: 5px 5px 0 0;
+      margin-right: 5px;
+    }
+    
+    .form-tab.active {
+      background: var(--secondary-color);
+      color: white;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    @media (max-width: 768px) {
+      .app-container {
+        flex-direction: column;
+      }
+      
+      .form-section, .card-container {
+        width: 100%;
+        max-width: 100%;
+      }
+      
+      h2 {
+        font-size: 22px;
+      }
+      
+      .button-group {
+        flex-direction: column;
+      }
+      
+      button {
+        width: 100%;
+      }
+    }
+    
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 8px;
+      width: 100%;
+    }
+    
+    .card-count {
+      margin-top: 10px;
+      font-weight: bold;
+      color: var(--secondary-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>INDIAN RAILWAY ID CARD GENERATOR</h2>
+    
+    <div class="app-container">
+      <div class="form-section">
+        <div class="form-tabs">
+          <div class="form-tab active" data-tab="basic">Basic Info</div>
+          <div class="form-tab" data-tab="additional">Additional Info</div>
+        </div>
+        
+        <div class="tab-content active" id="basic-tab">
+          <div class="form-row">
+            <label class="required" for="name">Name:</label>
+            <input type="text" id="name" placeholder="Full Name" aria-required="true">
+            <div class="error-message" id="name-error">Please enter a valid name</div>
+          </div>
+          
+          <div class="form-row">
+            <label for="idNumber">ID Card Number:</label>
+            <input type="text" id="idNumber" placeholder="Organization ID Number">
+          </div>
+          
+          <div class="form-row">
+            <label for="address">Address:</label>
+            <input type="text" id="address" placeholder="Complete Address">
+          </div>
+          
+          <div class="form-row">
+            <label class="required" for="aadhaar">Aadhaar Number:</label>
+            <input type="text" id="aadhaar" maxlength="12" placeholder="12 digits" aria-required="true">
+            <div class="error-message" id="aadhaar-error">Must be exactly 12 digits</div>
+            <div class="help-text">Must be exactly 12 digits</div>
+          </div>
+          
+          <div class="form-row">
+            <label class="required" for="phone">Phone:</label>
+            <input type="text" id="phone" maxlength="10" placeholder="10 digits" aria-required="true">
+            <div class="error-message" id="phone-error">Must be exactly 10 digits</div>
+            <div class="help-text">Must be exactly 10 digits</div>
+          </div>
+          
+          <div class="form-row">
+            <label for="blood">Blood Group:</label>
+            <select id="blood">
+              <option value="">Select Blood Group</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+          </div>
+          
+          <div class="form-row">
+            <label class="required" for="photo">Upload Photo:</label>
+            <input type="file" id="photo" accept="image/*" aria-required="true">
+            <div class="error-message" id="photo-error">Please upload a photo</div>
+            <div class="help-text">Recommended size: 3.5cm x 4.5cm</div>
+          </div>
+        </div>
+        
+        <div class="tab-content" id="additional-tab">
+          <div class="form-row">
+            <label class="required" for="issueDate">Date of Issue:</label>
+            <input type="date" id="issueDate" aria-required="true">
+            <div class="error-message" id="issueDate-error">Please select a valid date</div>
+          </div>
+          
+          <div class="form-row">
+            <label class="required" for="validity">Validity Upto:</label>
+            <input type="date" id="validity" aria-required="true">
+            <div class="error-message" id="validity-error">Please select a valid date</div>
+          </div>
+          
+          <div class="form-row">
+            <label class="required" for="policeVerification">Police Verification Date:</label>
+            <input type="date" id="policeVerification" aria-required="true">
+            <div class="error-message" id="policeVerification-error">Please select a valid date</div>
+          </div>
+          
+          <div class="form-row">
+            <label for="issuer">Issuing Authority Name & Designation:</label>
+            <input type="text" id="issuer" placeholder="Name & Designation">
+          </div>
+          
+          <div class="form-row">
+            <label for="dept">Department:</label>
+            <input type="text" id="dept" placeholder="Department Name">
+          </div>
+          
+          <div class="form-row">
+            <label for="emblem">Upload Emblem:</label>
+            <input type="file" id="emblem" accept="image/*">
+            <div class="help-text">Optional - will be used for all cards</div>
+          </div>
+        </div>
+        
+        <div class="button-group">
+          <button class="btn-add" onclick="addEmployee()">Add Employee</button>
+          <button class="btn-export" onclick="exportJSON()">Export JSON</button>
+          <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+        </div>
+        
+        <div class="form-row" style="margin-top: 15px;">
+          <input type="file" id="importFile" accept=".json,.csv" onchange="handleImport(this)">
+          <label for="importFile" class="file-upload-label">Import Data (JSON/CSV)</label>
+        </div>
+        
+        <div class="card-count" id="cardCount">0 cards generated</div>
+      </div>
+      
+      <div class="card-container" id="cards"></div>
+    </div>
+    
+    <button class="download-btn" onclick="downloadA4()">⬇ Download A4 Sheet</button>
+  </div>
+
+  <div class="notification" id="notification"></div>
+
+  <script>
+    let employees = [];
+    let emblemData = null;
+
+    // Initialize with current date for issue date
+    document.addEventListener('DOMContentLoaded', function() {
+      // Load data from localStorage if available
+      const savedData = localStorage.getItem('railwayEmployees');
+      const savedEmblem = localStorage.getItem('railwayEmblem');
+      
+      if (savedData) {
+        try {
+          employees = JSON.parse(savedData);
+          renderEmployees();
+          updateCardCount();
+        } catch (e) {
+          console.error("Error loading saved data:", e);
+          localStorage.removeItem('railwayEmployees');
+        }
+      }
+      
+      if (savedEmblem) {
+        emblemData = savedEmblem;
+      }
+      
+      const today = new Date();
+      const formattedDate = today.toISOString().substr(0, 10);
+      document.getElementById('issueDate').value = formattedDate;
+      
+      // Set validity to one year from today
+      const nextYear = new Date();
+      nextYear.setFullYear(today.getFullYear() + 1);
+      document.getElementById('validity').value = nextYear.toISOString().substr(0, 10);
+      
+      // Set police verification to current date
+      document.getElementById('policeVerification').value = formattedDate;
+      
+      // Setup tab functionality
+      document.querySelectorAll('.form-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabName = tab.getAttribute('data-tab');
+          
+          // Update active tab
+          document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          // Show corresponding content
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+          });
+          document.getElementById(`${tabName}-tab`).classList.add('active');
+        });
+      });
+      
+      // Add input validation
+      document.getElementById('aadhaar').addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '');
+        if (this.value.length > 12) this.value = this.value.slice(0, 12);
+        validateField(this, /^\d{12}$/.test(this.value), document.getElementById('aadhaar-error'));
+      });
+      
+      document.getElementById('phone').addEventListener('input', function(e) {
+        this.value = this.value.replace(/\D/g, '');
+        if (this.value.length > 10) this.value = this.value.slice(0, 10);
+        validateField(this, /^\d{10}$/.test(this.value), document.getElementById('phone-error'));
+      });
+      
+      document.getElementById('name').addEventListener('blur', function(e) {
+        validateField(this, this.value.trim().length > 0, document.getElementById('name-error'));
+      });
+      
+      // Date validation
+      ['issueDate', 'validity', 'policeVerification'].forEach(id => {
+        document.getElementById(id).addEventListener('change', function() {
+          validateField(this, this.value !== '', document.getElementById(`${id}-error`));
+        });
+      });
+      
+      // Photo validation
+      document.getElementById('photo').addEventListener('change', function() {
+        validateField(this, this.files.length > 0, document.getElementById('photo-error'));
+      });
+    });
+
+    function validateField(field, isValid, errorElement) {
+      if (isValid) {
+        field.classList.remove('error');
+        errorElement.style.display = 'none';
+      } else {
+        field.classList.add('error');
+        errorElement.style.display = 'block';
+      }
+      return isValid;
+    }
+
+    function validateForm() {
+      let isValid = true;
+      
+      // Validate required fields
+      isValid = validateField(document.getElementById('name'), 
+                document.getElementById('name').value.trim().length > 0, 
+                document.getElementById('name-error')) && isValid;
+                
+      isValid = validateField(document.getElementById('aadhaar'), 
+                /^\d{12}$/.test(document.getElementById('aadhaar').value), 
+                document.getElementById('aadhaar-error')) && isValid;
+                
+      isValid = validateField(document.getElementById('phone'), 
+                /^\d{10}$/.test(document.getElementById('phone').value), 
+                document.getElementById('phone-error')) && isValid;
+                
+      isValid = validateField(document.getElementById('issueDate'), 
+                document.getElementById('issueDate').value !== '', 
+                document.getElementById('issueDate-error')) && isValid;
+                
+      isValid = validateField(document.getElementById('validity'), 
+                document.getElementById('validity').value !== '', 
+                document.getElementById('validity-error')) && isValid;
+                
+      isValid = validateField(document.getElementById('policeVerification'), 
+                document.getElementById('policeVerification').value !== '', 
+                document.getElementById('policeVerification-error')) && isValid;
+                
+      isValid = validateField(document.getElementById('photo'), 
+                document.getElementById('photo').files.length > 0, 
+                document.getElementById('photo-error')) && isValid;
+                
+      return isValid;
+    }
+
+    document.getElementById("emblem").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) { 
+          emblemData = ev.target.result;
+          localStorage.setItem('railwayEmblem', emblemData);
+          showNotification("Emblem uploaded successfully!");
+          renderEmployees(); 
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function showNotification(message, isError = false) {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.className = isError ? 'notification error' : 'notification';
+      notification.classList.add('show');
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+    
+    function updateCardCount() {
+      const countElement = document.getElementById('cardCount');
+      countElement.textContent = `${employees.length} card${employees.length !== 1 ? 's' : ''} generated`;
+    }
+
+    function addEmployee() {
+      if (!validateForm()) {
+        showNotification("Please fix the errors in the form", true);
+        return;
+      }
+      
+      const emp = {
+        name: document.getElementById("name").value.trim(),
+        idNumber: document.getElementById("idNumber").value.trim(),
+        address: document.getElementById("address").value.trim(),
+        aadhaar: document.getElementById("aadhaar").value.trim(),
+        issueDate: document.getElementById("issueDate").value,
+        validity: document.getElementById("validity").value,
+        policeVerification: document.getElementById("policeVerification").value,
+        issuer: document.getElementById("issuer").value.trim(),
+        dept: document.getElementById("dept").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        blood: document.getElementById("blood").value.trim(),
+        photo: null
+      };
+      
+      const photoFile = document.getElementById("photo").files[0];
+
+      const pushAndRender = (photoData) => {
+        emp.photo = photoData;
+        employees.push(emp);
+        
+        // Save to localStorage
+        localStorage.setItem('railwayEmployees', JSON.stringify(employees));
+        
+        renderEmployees();
+        updateCardCount();
+        showNotification("Employee added successfully!");
+
+        // Reset form fields
+        document.getElementById("name").value = "";
+        document.getElementById("idNumber").value = "";
+        document.getElementById("address").value = "";
+        document.getElementById("aadhaar").value = "";
+        document.getElementById("issuer").value = "";
+        document.getElementById("dept").value = "";
+        document.getElementById("phone").value = "";
+        document.getElementById("blood").value = "";
+        document.getElementById("photo").value = "";
+        
+        // Clear validation errors
+        document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+        document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+        
+        document.getElementById("name").focus();
+      };
+
+      if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) { pushAndRender(e.target.result); };
+        reader.readAsDataURL(photoFile);
+      } else {
+        pushAndRender(null);
+      }
+    }
+
+    function removeEmployee(index) { 
+      if (confirm("Are you sure you want to remove this employee?")) {
+        employees.splice(index, 1); 
+        localStorage.setItem('railwayEmployees', JSON.stringify(employees));
+        renderEmployees(); 
+        updateCardCount();
+        showNotification("Employee removed");
+      }
+    }
+
+    function renderEmployees() {
+      const container = document.getElementById("cards");
+      container.innerHTML = "";
+      
+      if (employees.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>No employees added yet.</p>
+            <p>Fill the form and click "Add Employee" to get started.</p>
+          </div>`;
+        return;
+      }
+      
+      employees.forEach((emp, i) => {
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'card-wrapper';
+        cardWrapper.innerHTML = `
+          <span class="remove-btn" onclick="removeEmployee(${i})" aria-label="Remove employee">✖</span>
+          <div style="display:flex; gap:10px;">
+            <!-- FRONT -->
+            <div class="id-card front">
+              <div class="header">${emblemData ? `<img src="${emblemData}" alt="Indian Railway Emblem">` : ""}<span>INDIAN RAILWAY</span></div>
+              <div class="id-number">ID Card No: ${emp.idNumber || emp.aadhaar}</div>
+              <div class="photo">${emp.photo ? `<img src="${emp.photo}" alt="${emp.name}">` : "PHOTO"}</div>
+              <div class="signature"><div class="signature-box"></div>signature of card holder</div>
+              <div class="emp-name">${emp.name}</div>
+              <div class="footer">Issuing Authority</div>
+            </div>
+            <!-- BACK -->
+            <div class="id-card back">
+              <div class="back-top"><div class="qrcode" id="qr${i}"></div><div class="blood">${emp.blood}</div></div>
+              <div class="dept">${emp.dept}</div>
+              <div class="mobile">${emp.phone}</div>
+              <div class="aadhaar">${emp.aadhaar}</div>
+              <div class="instructions">Please surrender to issuing authority on completion/termination of service</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(cardWrapper);
+
+        const qrContainer = document.getElementById(`qr${i}`);
+        qrContainer.innerHTML = "";
+        const qrText = `Name: ${emp.name}
+ID Card No: ${emp.idNumber || emp.aadhaar}
+Aadhaar No: ${emp.aadhaar}
+Date of Issue: ${emp.issueDate}
+Validity Upto: ${emp.validity}
+Police Verification Date: ${emp.policeVerification}`;
+        
+        try {
+          new QRCode(qrContainer, {
+            text: qrText,
+            width: qrContainer.clientWidth * 6,
+            height: qrContainer.clientHeight * 6,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+          });
+        } catch (error) {
+          console.error("QR Code generation error:", error);
+          qrContainer.innerHTML = "QR Error";
+        }
+      });
+
+      // Adjust blood group font size
+      document.querySelectorAll(".blood").forEach(box => {
+        const bg = box.textContent.trim();
+        if (["AB", "AB-", "AB+"].includes(bg)) {
+          box.style.fontSize = "32pt";
+        } else {
+          box.style.fontSize = "48pt";
+        }
+      });
+
+      // Adjust name font size
+      document.querySelectorAll(".emp-name").forEach(box => {
+        const len = box.textContent.trim().length;
+        if (len > 20) {
+          box.style.fontSize = "12pt";
+        } else if (len > 12) {
+          box.style.fontSize = "14pt";
+        } else {
+          box.style.fontSize = "16pt";
+        }
+      });
+    }
+
+    async function downloadA4() {
+      if (employees.length === 0) {
+        showNotification("No employees to download", true);
+        return;
+      }
+      
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF("p", "cm", "a4");
+        const cardW = 5.4, cardH = 8.75;
+        let y = 1;
+        
+        // Show generating notification
+        showNotification("Generating PDF... Please wait");
+        
+        for (let i = 0; i < employees.length; i++) {
+          const cardSet = document.getElementsByClassName("card-wrapper")[i];
+          const front = await html2canvas(cardSet.getElementsByClassName("front")[0], { scale: 2 });
+          const back = await html2canvas(cardSet.getElementsByClassName("back")[0], { scale: 2 });
+          
+          if (y + cardH > 29.7) { 
+            pdf.addPage(); 
+            y = 1; 
+          }
+          
+          pdf.addImage(front.toDataURL("image/png"), "PNG", 1, y, cardW, cardH);
+          pdf.addImage(back.toDataURL("image/png"), "PNG", 7, y, cardW, cardH);
+          y += cardH + 0.2;
+        }
+        
+        pdf.save("Indian_Railway_ID_Cards.pdf");
+        showNotification("PDF downloaded successfully!");
+      } catch (error) {
+        console.error("PDF generation error:", error);
+        showNotification("Error generating PDF", true);
+      }
+    }
+
+    function exportJSON() {
+      if (employees.length === 0) {
+        showNotification("No employees to export", true);
+        return;
+      }
+      
+      try {
+        const dataStr = JSON.stringify(employees, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "indian_railway_employees.json";
+        a.click();
+        showNotification("JSON exported successfully!");
+      } catch (error) {
+        console.error("JSON export error:", error);
+        showNotification("Error exporting JSON", true);
+      }
+    }
+
+    function handleImport(input) {
+      const file = input.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) { 
+        try {
+          if (file.name.endsWith('.json')) {
+            importJSON(e.target.result);
+          } else if (file.name.endsWith('.csv')) {
+            importCSV(e.target.result);
+          } else {
+            showNotification("Unsupported file format", true);
+          }
+          input.value = ""; // Reset file input
+        } catch (error) {
+          console.error("Import error:", error);
+          showNotification("Error importing file", true);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function importJSON(jsonText) {
+      try {
+        const importedData = JSON.parse(jsonText);
+        if (Array.isArray(importedData)) {
+          employees = importedData;
+          localStorage.setItem('railwayEmployees', JSON.stringify(employees));
+          renderEmployees();
+          updateCardCount();
+          showNotification("Data imported successfully!");
+        } else {
+          showNotification("Invalid data format", true);
+        }
+      } catch (error) {
+        console.error("JSON import error:", error);
+        showNotification("Invalid JSON file", true);
+      }
+    }
+    
+    function importCSV(csvText) {
+      try {
+        const lines = csvText.split('\n');
+        if (lines.length < 2) {
+          showNotification("CSV file is empty", true);
+          return;
+        }
+        
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        const newEmployees = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i].trim() === '') continue;
+          
+          const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+          if (values.length !== headers.length) continue;
+          
+          const emp = {};
+          headers.forEach((header, index) => {
+            emp[header] = values[index];
+          });
+          
+          newEmployees.push(emp);
+        }
+        
+        if (newEmployees.length > 0) {
+          employees = newEmployees;
+          localStorage.setItem('railwayEmployees', JSON.stringify(employees));
+          renderEmployees();
+          updateCardCount();
+          showNotification("CSV data imported successfully!");
+        } else {
+          showNotification("No valid data found in CSV", true);
+        }
+      } catch (error) {
+        console.error("CSV import error:", error);
+        showNotification("Error importing CSV", true);
+      }
+    }
+
+    function exportCSV() {
+      if (employees.length === 0) {
+        showNotification("No employees to export", true);
+        return;
+      }
+      
+      try {
+        let csv = "Name,ID Number,Address,Aadhaar,Date of Issue,Validity,Police Verification,Issuer,Department,Phone,Blood Group\n";
+        employees.forEach(e => {
+          csv += `"${e.name}","${e.idNumber || ''}","${e.address}",${e.aadhaar},${e.issueDate},${e.validity},${e.policeVerification},"${e.issuer}","${e.dept}",${e.phone},${e.blood}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "indian_railway_employees.csv";
+        a.click();
+        showNotification("CSV exported successfully!");
+      } catch (error) {
+        console.error("CSV export error:", error);
+        showNotification("Error exporting CSV", true);
+      }
+    }
+
+    // Initialize with empty state
+    renderEmployees();
+    updateCardCount();
+  </script>
+</body>
+</html>
